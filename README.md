@@ -53,5 +53,18 @@ We have outlined the classes that we should need for this game below.
             -y_position
 
 4. What libraries and tools will you need to learn to use?
+    We will be importing PyGame. PyGame has many different features such as creating a border for your game, tracking direction and speed, tracking the key you press, sprites, and so on. Since we are making a tank game with walls, enemy tanks, and projectiles, we will need to learn how all of these will intereact with each other. We may need to import the random library and/or time library to track the time 
 
 5. Identify the highest-priority features, the medium-priority features, and the lowest-priority features for your project.
+    Highest-priority features:
+        1. Game board
+        2. Tank objects
+        3. Movement
+    
+    Medium-priority features:
+        1. Projectiles
+        2. Collisions
+
+    Lowest-priority features:
+        1. Score
+        2. Losing a life
