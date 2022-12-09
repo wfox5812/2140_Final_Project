@@ -36,18 +36,20 @@ class Tank:
 
         if self.rect.bottom > screen_height:
             self.rect.bottom = screen_height
-            dx = 0
             dy = 0
 
         screen.blit(self.image, self.rect)
     
     def rotate_tank(self):
         key = pygame.key.get_pressed()
-        if key[pygame.K_a]:
+        if key[pygame.K_LEFT]:
             self.image = pygame.transform.rotate(self.image, 90)
-        if key[pygame.K_d]:
-            self.image = pygame.transform.rotate(self.image, -90)
-
+        if key[pygame.K_RIGHT]:
+            self.image = pygame.transform.rotate(self.image, 90)
+        if key[pygame.K_UP]:
+            self.image = pygame.transform.rotate(self.image, 90)
+        if key[pygame.K_DOWN]:
+            self.image = pygame.transform.rotate(self.image, 90)
 
     def remove_heart(self):
         '''
