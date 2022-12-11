@@ -16,40 +16,66 @@ class Tank:
         self.rect = self.image.get_rect()
         self.rect.x = x_pos
         self.rect.y = y_pos
+        self.direction = 270
 
 
     def update_tank(self):
         dx = 0
         dy = 0
         key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
+        if key[pygame.K_LEFT] and self.rect.centerx > 15:
             dx -= 2
-        if key[pygame.K_RIGHT]:
+        if key[pygame.K_RIGHT] and self.rect.centerx < 780:
             dx += 2
-        if key[pygame.K_UP]:
+        if key[pygame.K_UP] and self.rect.centery > 17:
             dy -= 2
-        if key[pygame.K_DOWN]:
+        if key[pygame.K_DOWN] and self.rect.centery < 783:
             dy += 2
     
         self.rect.x += dx
         self.rect.y += dy
 
-        if self.rect.bottom > screen_height:
-            self.rect.bottom = screen_height
+        if self.rect.centerx < 790 and self.rect.centerx > 10:
+            dx = 0
+        if self.rect.centery > 790 or self.rect.centery < 10:
             dy = 0
 
         screen.blit(self.image, self.rect)
     
     def rotate_tank(self):
         key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
-            self.image = pygame.transform.rotate(self.image, 90)
-        if key[pygame.K_RIGHT]:
-            self.image = pygame.transform.rotate(self.image, 90)
-        if key[pygame.K_UP]:
-            self.image = pygame.transform.rotate(self.image, 90)
-        if key[pygame.K_DOWN]:
-            self.image = pygame.transform.rotate(self.image, 90)
+        if key[pygame.K_LEFT] and self.direction != 180:
+            if self.direction == 0:
+                self.image = pygame.transform.rotate(self.image, 180)
+            if self.direction == 90:
+                self.image = pygame.transform.rotate(self.image, 90)
+            if self.direction == 270:
+                self.image = pygame.transform.rotate(self.image, -90)
+            self.direction = 180
+        if key[pygame.K_RIGHT] and self.direction != 0:
+            if self.direction == 90:
+                self.image = pygame.transform.rotate(self.image, -90)
+            if self.direction == 180:
+                self.image = pygame.transform.rotate(self.image, -180)
+            if self.direction == 270:
+                self.image = pygame.transform.rotate(self.image, -270)
+            self.direction = 0
+        if key[pygame.K_UP] and self.direction != 90:
+            if self.direction == 0:
+                self.image = pygame.transform.rotate(self.image, 90)
+            if self.direction == 180:
+                self.image = pygame.transform.rotate(self.image, -90)
+            if self.direction == 270:
+                self.image = pygame.transform.rotate(self.image, -180)
+            self.direction = 90
+        if key[pygame.K_DOWN] and self.direction != 270:
+            if self.direction == 0:
+                self.image = pygame.transform.rotate(self.image, 270)
+            if self.direction == 90:
+                self.image = pygame.transform.rotate(self.image, 180)
+            if self.direction == 180:
+                self.image = pygame.transform.rotate(self.image, 90)
+            self.direction = 270
 
     def remove_heart(self):
         '''
@@ -127,13 +153,134 @@ class Projectile:
     '''
     pass
 
-    def __init__(self, speed, direction, x_pos, y_pos, size):
-        self.speed = speed
-        self.direction = direction
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.size = size
-   
+    def __init__(self, owner_tank, wall1):
+        img = pygame.image.load('bullet.png')
+        self.image = pygame.transform.scale(img, (5, 20)) 
+        self.state = 'ready'
+        self.owner_tank = owner_tank
+        self.rect = self.image.get_rect()
+        self.rect.x = self.owner_tank.rect.centerx
+        self.rect.y = self.owner_tank.rect.centery
+        self.direction = self.owner_tank.direction
+        self.orientation = 90
+        self.wall1 = wall1
+
+    def update_bullet(self, wall_hit):
+        dy = 10
+        dx = 10
+        key = pygame.key.get_pressed()
+
+        #if space bar pressed
+        if key[pygame.K_SPACE]:
+            self.state = 'fired'
+            self.direction = self.owner_tank.direction
+        
+        #if bullet is waiting to be fired
+        if (self.state == 'ready'):
+            self.rect.x = self.owner_tank.rect.centerx
+            self.rect.y = self.owner_tank.rect.centery
+            if self.owner_tank.direction == 0:
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, -180)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -270)
+                self.orientation = 0
+            if self.owner_tank.direction == 90:
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -180)
+                self.orientation = 90
+            if self.owner_tank.direction == 180:
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 180)
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                self.orientation = 180
+            if self.owner_tank.direction == 270:
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, 180)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 270)
+                self.orientation = 270
+
+        #if bullet is fired
+        if (self.state == 'fired'):
+            #set bullet orientation
+            if self.direction == 0:
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, -180)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -270)
+                self.orientation = 0
+            if self.direction == 90:
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -180)
+                self.orientation = 90
+            if self.direction == 180:
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 180)
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 270:
+                    self.image = pygame.transform.rotate(self.image, -90)
+                self.orientation = 180
+            if self.direction == 270:
+                if self.orientation == 90:
+                    self.image = pygame.transform.rotate(self.image, 180)
+                if self.orientation == 180:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                if self.orientation == 0:
+                    self.image = pygame.transform.rotate(self.image, 270)
+                self.orientation = 270
+            #determines direction bullet will shoot
+            if self.direction == 0: 
+                self.rect.x += dx
+            if self.direction == 90:
+                self.rect.y -= dy
+            if self.direction == 180:
+                self.rect.x -= dx
+            if self.direction == 270:
+                self.rect.y += dy
+        
+        #if bullet hits the edge of the screen
+        if (self.rect.x < 0) or (self.rect.x > 800) or (self.rect.y < 0) or (self.rect.y > 800):
+            self.state = 'ready'
+            self.rect.x = self.owner_tank.rect.x
+            self.rect.y = self.owner_tank.rect.y
+
+        #if bullet hits a wall
+        if wall_hit == True:
+            self.state = 'ready'
+            self.rect.x = self.owner_tank.rect.x
+            self.rect.y = self.owner_tank.rect.y
+            '''
+        for i in range(len(self.walls)):
+            current_rect = self.walls[i].wall_rect
+            collide = pygame.Rect.colliderect(current_rect, self.rect)
+            if collide == True:
+                self.state = 'ready'
+                self.rect.x = self.owner_tank.rect.x
+                self.rect.y = self.owner_tank.rect.y
+                pass
+                    '''
+        #update screen
+        screen.blit(self.image, self.rect)
+
     def set_direction(self, x_pos_input, y_pos_input):
         '''
         Sets the direction of the projectile
@@ -146,9 +293,9 @@ class Wall:
     '''
     pass
     def __init__(self, x_length, y_length):
-        self.surface = pygame.image.load('Wall.jpg')
-        self.surface = pygame.transform.scale(self.surface,(x_length, y_length))
-        self.wall_rect = self.surface.get_rect()
+        img = pygame.image.load('Wall.jpg')
+        self.surface = pygame.transform.scale(img,(x_length, y_length))
+        self.rect = self.surface.get_rect()
 
 #creating walls
 wall1 = Wall(10,100)
@@ -167,6 +314,8 @@ wall13 = Wall(20,100)
 wall14 = Wall(150,15)
 wall15 = Wall(150,15)
 
+walls_list = [wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10,
+                wall11, wall12, wall13, wall14, wall15]
 
 screen_width = 800
 screen_height = 800
@@ -177,23 +326,36 @@ bg_img = pygame.image.load('Background.png')
 bg_img = pygame.transform.scale(bg_img,(800,800))
 
 #create players tank
-player_one = Tank(100, 100)
+player_one = Tank(385, 383)
+
+#create player tank bullet
+player_one_bullet = Projectile(player_one, wall1)
 
 #add caption to the game window
 pygame.display.set_caption("Tank Game")
 
 #run condition
 run = True
-#game loop
+
+#GAME LOOP
 while run:
     #set background
     screen.blit(bg_img, (0,0))
+
+    #check for collisions
+    bullet_collision = pygame.Rect.colliderect(wall1.rect, player_one_bullet.rect)
+    print(bullet_collision)
 
     #update tank
     player_one.update_tank()
 
     #rotate tank
     player_one.rotate_tank()
+
+    #update player 1 bullet
+    player_one_bullet.update_bullet(bullet_collision)
+
+    #draw walls
     screen.blit(wall1.surface,(345,345))
     screen.blit(wall2.surface,(445,345))
     screen.blit(wall3.surface,(355,345))
