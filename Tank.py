@@ -3,35 +3,56 @@ from pygame.locals import *
 pygame.init()
 clock = pygame.time.Clock()
 
-
-
 #This is the game file for the game
 class Tank:
     '''
-    This class represents a single tank object and will be the parent class 
+    This class represents a single tank object and will be the parent class
     '''
-    def __init__(self, x_pos, y_pos):
+    def __init__(self, x_pos, y_pos, walls_list):
         img = pygame.image.load('player_one.png')
         self.image = pygame.transform.scale(img, (30, 35))
         self.rect = self.image.get_rect()
         self.rect.x = x_pos
         self.rect.y = y_pos
         self.direction = 270
+        self.walls = walls_list
 
 
     def update_tank(self):
         dx = 0
         dy = 0
+        self.left = 'yes'
+        self.right = 'yes'
+        self.up = 'yes'
+        self.down = 'yes'
+
+        #check for collisions
+        for i in range(len(self.walls)):
+            if self.walls[i].rect.colliderect(self.rect):
+                if self.direction == 0:
+                    self.right = 'no'
+                    self.rect.x -= 2
+                if self.direction == 90:
+                    self.up = 'no'
+                    self.rect.y += 2
+                if self.direction == 180:
+                    self.left = 'no'
+                    self.rect.x += 2
+                if self.direction == 270:
+                    self.down = 'no'
+                    self.rect.y -= 2
+                pass
+
         key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT] and self.rect.centerx > 15:
+        if key[pygame.K_LEFT] and self.rect.centerx > 15 and self.left != 'no':
             dx -= 2
-        if key[pygame.K_RIGHT] and self.rect.centerx < 780:
+        if key[pygame.K_RIGHT] and self.rect.centerx < 780 and self.right != 'no':
             dx += 2
-        if key[pygame.K_UP] and self.rect.centery > 17:
+        if key[pygame.K_UP] and self.rect.centery > 17 and self.up != 'no':
             dy -= 2
-        if key[pygame.K_DOWN] and self.rect.centery < 783:
+        if key[pygame.K_DOWN] and self.rect.centery < 783 and self.down != 'no':
             dy += 2
-    
+   
         self.rect.x += dx
         self.rect.y += dy
 
@@ -41,7 +62,7 @@ class Tank:
             dy = 0
 
         screen.blit(self.image, self.rect)
-    
+   
     def rotate_tank(self):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] and self.direction != 180:
@@ -77,63 +98,37 @@ class Tank:
                 self.image = pygame.transform.rotate(self.image, 90)
             self.direction = 270
 
-    def remove_heart(self):
-        '''
-        This function will remove one heart from the tank's health
-        '''
-        self.health -= 1
-        pass
 
-    def set_health(self, health_input):
-        '''
-        This function
-        '''
-        self.health = health_input
-        pass
-    
-    def move(self, x_pos_input, y_pos_input):
-        '''
-        Takes in inputs from the arrow keys and moves the tank in either the x or y direction
-        '''
-        pass
-
-    def shoot_projectile(self):
-        '''
-        Creates a projectile object and causes it to moves away from the tank object in the direction of self.direction with
-        speed determined by self.fire_rate
-        '''
-        pass
-
-    def set_direction(self, key_press):
-        '''
-        Sets self.direction of tank object to the direction of most recent arrow key press
-        '''
-        pass
-
-class PlayerTank(Tank):
-    '''
-    Represents the player's tank
-    '''
-    def get_movement_key_press(self, direction_key_input):
-        '''
-        Gets a button press input from the arrow keys
-        Input:
-            direction_key_input
-        '''
-        pass
-
-    def get_shoot_button_press(self, shoot_key_input):
-        '''
-        Gets button press input from designated button for firing
-        Input:
-            shoot_key_input
-        '''
-
-class EnemyTank(Tank):
+class EnemyTank:
     '''
     This is a class representing the enemy tank
     '''
     pass
+
+    def __init__(self, start_x, start_y, end_x, end_y):
+        img = pygame.image.load('enemy_tank.png')
+        self.image = pygame.transform.scale(img, (30, 35))
+        self.rect = self.image.get_rect()
+        self.rect.x = start_x
+        self.rect.y = start_y
+        self.direction = 270
+        self.end_x = end_x
+        self.end_y = end_y
+
+
+    def update_tank(self):
+        dx = 1
+        dy = 1
+
+        screen.blit(self.image, self.rect)
+
+        if self.rect.x < self.end_x:
+            self.rect.x += dx
+        
+        if self.rect.y < self.end_y:
+            self.rect.y += dy
+        
+        
 
     def set_fire_rate(self):
         '''
@@ -142,10 +137,6 @@ class EnemyTank(Tank):
         '''
         pass
 
-    def set_direction(self):
-        '''
-        Sets the direction of the tank (probably will be patrol an area)
-        '''
 
 class Projectile:
     '''
@@ -153,9 +144,9 @@ class Projectile:
     '''
     pass
 
-    def __init__(self, owner_tank, wall1):
+    def __init__(self, owner_tank, walls_list):
         img = pygame.image.load('bullet.png')
-        self.image = pygame.transform.scale(img, (5, 20)) 
+        self.image = pygame.transform.scale(img, (5, 20))
         self.state = 'ready'
         self.owner_tank = owner_tank
         self.rect = self.image.get_rect()
@@ -163,18 +154,18 @@ class Projectile:
         self.rect.y = self.owner_tank.rect.centery
         self.direction = self.owner_tank.direction
         self.orientation = 90
-        self.wall1 = wall1
+        self.walls = walls_list
 
-    def update_bullet(self, wall_hit):
-        dy = 10
-        dx = 10
+    def update_bullet(self):
+        dy = 5
+        dx = 5
         key = pygame.key.get_pressed()
 
         #if space bar pressed
         if key[pygame.K_SPACE]:
             self.state = 'fired'
             self.direction = self.owner_tank.direction
-        
+       
         #if bullet is waiting to be fired
         if (self.state == 'ready'):
             self.rect.x = self.owner_tank.rect.centerx
@@ -248,7 +239,7 @@ class Projectile:
                     self.image = pygame.transform.rotate(self.image, 270)
                 self.orientation = 270
             #determines direction bullet will shoot
-            if self.direction == 0: 
+            if self.direction == 0:
                 self.rect.x += dx
             if self.direction == 90:
                 self.rect.y -= dy
@@ -256,7 +247,7 @@ class Projectile:
                 self.rect.x -= dx
             if self.direction == 270:
                 self.rect.y += dy
-        
+       
         #if bullet hits the edge of the screen
         if (self.rect.x < 0) or (self.rect.x > 800) or (self.rect.y < 0) or (self.rect.y > 800):
             self.state = 'ready'
@@ -264,55 +255,45 @@ class Projectile:
             self.rect.y = self.owner_tank.rect.y
 
         #if bullet hits a wall
-        if wall_hit == True:
-            self.state = 'ready'
-            self.rect.x = self.owner_tank.rect.x
-            self.rect.y = self.owner_tank.rect.y
-            '''
         for i in range(len(self.walls)):
-            current_rect = self.walls[i].wall_rect
-            collide = pygame.Rect.colliderect(current_rect, self.rect)
-            if collide == True:
+            if self.walls[i].rect.colliderect(player_one_bullet.rect):
                 self.state = 'ready'
                 self.rect.x = self.owner_tank.rect.x
                 self.rect.y = self.owner_tank.rect.y
                 pass
-                    '''
+
         #update screen
         screen.blit(self.image, self.rect)
 
-    def set_direction(self, x_pos_input, y_pos_input):
-        '''
-        Sets the direction of the projectile
-        '''
-        pass
 
 class Wall:
     '''
     This is a class representing a wall on the board
     '''
     pass
-    def __init__(self, x_length, y_length):
+    def __init__(self, x_length, y_length, x_pos, y_pos):
+        self.x_pos = x_pos
+        self.y_pos = y_pos
         img = pygame.image.load('Wall.jpg')
         self.surface = pygame.transform.scale(img,(x_length, y_length))
-        self.rect = self.surface.get_rect()
+        self.rect = Rect(x_pos, y_pos, x_length, y_length)
 
 #creating walls
-wall1 = Wall(10,100)
-wall2 = Wall(10,110)
-wall3 = Wall(90,10)
-wall4 = Wall(55,10)
-wall5 = Wall(20,350)
-wall6 = Wall(245,20)
-wall7 = Wall(50,20)
-wall8 = Wall(270,10)
-wall9 = Wall(270,10)
-wall10 = Wall(90,60)
-wall11 = Wall(80,10)
-wall12 = Wall(60,90)
-wall13 = Wall(20,100)
-wall14 = Wall(150,15)
-wall15 = Wall(150,15)
+wall1 = Wall(10,100,345,345)
+wall2 = Wall(10,110,445,345)
+wall3 = Wall(90,10,355,345)
+wall4 = Wall(55,10,345,445)
+wall5 = Wall(20,350,380,450)
+wall6 = Wall(245,20,455,390)
+wall7 = Wall(50,20,750,390)
+wall8 = Wall(270,10,80,345)
+wall9 = Wall(270,10,0,445)
+wall10 = Wall(90,60,200,100)
+wall11 = Wall(80,10,720,70)
+wall12 = Wall(60,90,445,235)
+wall13 = Wall(20,100,550,50)
+wall14 = Wall(150,15,60,600)
+wall15 = Wall(150,15,60,600)
 
 walls_list = [wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10,
                 wall11, wall12, wall13, wall14, wall15]
@@ -326,10 +307,18 @@ bg_img = pygame.image.load('Background.png')
 bg_img = pygame.transform.scale(bg_img,(800,800))
 
 #create players tank
-player_one = Tank(385, 383)
+player_one = Tank(385, 383, walls_list)
 
 #create player tank bullet
-player_one_bullet = Projectile(player_one, wall1)
+player_one_bullet = Projectile(player_one, walls_list)
+
+#create enemy tank one
+enemy_tank_one = EnemyTank(470, 342, 620, 342)
+enemy_tank_two = EnemyTank(30, 30, 30, 230)
+enemy_tank_three = EnemyTank(100, 365, 300, 365)
+enemy_tank_four = EnemyTank(50, 700, 250, 700)
+enemy_tank_five = EnemyTank(50, 500, 200, 500)
+enemy_tank_six = EnemyTank(500, 700, 700, 700)
 
 #add caption to the game window
 pygame.display.set_caption("Tank Game")
@@ -344,7 +333,6 @@ while run:
 
     #check for collisions
     bullet_collision = pygame.Rect.colliderect(wall1.rect, player_one_bullet.rect)
-    print(bullet_collision)
 
     #update tank
     player_one.update_tank()
@@ -353,24 +341,31 @@ while run:
     player_one.rotate_tank()
 
     #update player 1 bullet
-    player_one_bullet.update_bullet(bullet_collision)
+    player_one_bullet.update_bullet()
+
+    enemy_tank_one.update_tank()
+    enemy_tank_two.update_tank()
+    enemy_tank_three.update_tank()
+    enemy_tank_four.update_tank()
+    enemy_tank_five.update_tank()
+    enemy_tank_six.update_tank()
 
     #draw walls
-    screen.blit(wall1.surface,(345,345))
-    screen.blit(wall2.surface,(445,345))
-    screen.blit(wall3.surface,(355,345))
-    screen.blit(wall4.surface,(345,445))
-    screen.blit(wall5.surface,(380,450))
-    screen.blit(wall6.surface,(455,390))
-    screen.blit(wall7.surface,(750,390))
-    screen.blit(wall8.surface,(80,345))
-    screen.blit(wall9.surface,(0,445))
-    screen.blit(wall10.surface,(200,100))
-    screen.blit(wall11.surface,(720,70))
-    screen.blit(wall12.surface,(445,235))
-    screen.blit(wall13.surface,(550,50))
-    screen.blit(wall14.surface,(60,600))
-    screen.blit(wall15.surface,(60,600))
+    screen.blit(wall1.surface,(wall1.x_pos,wall1.y_pos))
+    screen.blit(wall2.surface,(wall2.x_pos,wall2.y_pos))
+    screen.blit(wall3.surface,(wall3.x_pos,wall3.y_pos))
+    screen.blit(wall4.surface,(wall4.x_pos,wall4.y_pos))
+    screen.blit(wall5.surface,(wall5.x_pos,wall5.y_pos))
+    screen.blit(wall6.surface,(wall6.x_pos,wall6.y_pos))
+    screen.blit(wall7.surface,(wall7.x_pos,wall7.y_pos))
+    screen.blit(wall8.surface,(wall8.x_pos,wall8.y_pos))
+    screen.blit(wall9.surface,(wall9.x_pos,wall9.y_pos))
+    screen.blit(wall10.surface,(wall10.x_pos,wall10.y_pos))
+    screen.blit(wall11.surface,(wall11.x_pos,wall11.y_pos))
+    screen.blit(wall12.surface,(wall12.x_pos,wall12.y_pos))
+    screen.blit(wall13.surface,(wall13.x_pos,wall13.y_pos))
+    screen.blit(wall14.surface,(wall14.x_pos,wall14.y_pos))
+    screen.blit(wall15.surface,(wall15.x_pos,wall15.y_pos))
 
     #quit condition
     for event in pygame.event.get():
