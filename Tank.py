@@ -1,3 +1,6 @@
+import sys
+print(sys.executable)
+
 import pygame
 from pygame.locals import *
 pygame.init()
