@@ -29,9 +29,26 @@ class Tank:
         self.up = 'yes'
         self.down = 'yes'
 
-        #check for collisions
+        #check for collisions with walls
         for i in range(len(self.walls)):
             if self.walls[i].rect.colliderect(self.rect):
+                if self.direction == 0:
+                    self.right = 'no'
+                    self.rect.x -= 2
+                if self.direction == 90:
+                    self.up = 'no'
+                    self.rect.y += 2
+                if self.direction == 180:
+                    self.left = 'no'
+                    self.rect.x += 2
+                if self.direction == 270:
+                    self.down = 'no'
+                    self.rect.y -= 2
+                pass
+        
+        #check for collisions with other tanks
+        for i in range(len(enemy_tanks_list)):
+            if enemy_tanks_list[i].rect.colliderect(self.rect):
                 if self.direction == 0:
                     self.right = 'no'
                     self.rect.x -= 2
@@ -106,7 +123,6 @@ class EnemyTank:
     '''
     This is a class representing the enemy tank
     '''
-    pass
 
     def __init__(self, start_x, start_y, end_x, end_y):
         img = pygame.image.load('enemy_tank.png')
@@ -115,9 +131,14 @@ class EnemyTank:
         self.rect.x = start_x
         self.rect.y = start_y
         self.direction = 270
+        self.start_x = start_x
+        self.start_y = start_y
         self.end_x = end_x
         self.end_y = end_y
+        self.recent_limit_x = self.start_x
+        self.recent_limit_y = self.start_y
 
+    #def check_collision(self):
 
     def update_tank(self):
         dx = 1
@@ -125,11 +146,25 @@ class EnemyTank:
 
         screen.blit(self.image, self.rect)
 
-        if self.rect.x < self.end_x:
+        if self.recent_limit_x == self.start_x:
             self.rect.x += dx
+            if self.rect.x == self.end_x:
+                self.recent_limit_x = self.end_x
         
-        if self.rect.y < self.end_y:
-            self.rect.y += dy
+        if self.recent_limit_y == self.start_y:
+            self.rect.y += dx
+            if self.rect.y == self.end_y:
+                self.recent_limit_y = self.end_y
+
+        if self.recent_limit_x == self.end_x:
+            self.rect.x -= dx
+            if self.rect.x == self.start_x:
+                self.recent_limit_x = self.start_x
+
+        if self.recent_limit_y == self.end_y:
+            self.rect.y -= dx
+            if self.rect.y == self.start_y:
+                self.recent_limit_y = self.start_y
         
         
 
@@ -158,6 +193,7 @@ class Projectile:
         self.direction = self.owner_tank.direction
         self.orientation = 90
         self.walls = walls_list
+        #self.tanks = [tank for tank in self.tanks if not tank.remove_flag]
 
     def update_bullet(self):
         dy = 5
@@ -165,9 +201,10 @@ class Projectile:
         key = pygame.key.get_pressed()
 
         #if space bar pressed
-        if key[pygame.K_SPACE]:
-            self.state = 'fired'
-            self.direction = self.owner_tank.direction
+        if self.owner_tank == player_one:
+            if key[pygame.K_SPACE]:
+                self.state = 'fired'
+                self.direction = self.owner_tank.direction
        
         #if bullet is waiting to be fired
         if (self.state == 'ready'):
@@ -259,11 +296,36 @@ class Projectile:
 
         #if bullet hits a wall
         for i in range(len(self.walls)):
-            if self.walls[i].rect.colliderect(player_one_bullet.rect):
+            if self.walls[i].rect.colliderect(self.rect):
                 self.state = 'ready'
                 self.rect.x = self.owner_tank.rect.x
                 self.rect.y = self.owner_tank.rect.y
                 pass
+        
+        #if bullet hits an enemy tank
+        '''for i in range(len(enemy_tanks_list)):
+            if enemy_tanks_list[i].rect.colliderect(player_one_bullet.rect):
+                self.state = 'ready'
+                self.rect.x = self.owner_tank.rect.x
+                self.rect.y = self.owner_tank.rect.y
+                print('nefore removing from list')
+                enemy_tanks_list.remove(enemy_tanks_list[i])
+                enemy_tank_bullets.remove(enemy_tank_bullets[i])
+                print('before removing sprires')
+                del enemy_tanks_list[i]
+                del enemy_tank_bullets[i]
+                break'''
+        
+        for i in range(len(enemy_tanks_list) - 1, -1, -1):
+            if enemy_tanks_list[i].rect.colliderect(player_one_bullet.rect):
+                self.state = 'ready'
+                self.rect.x = self.owner_tank.rect.x
+                self.rect.y = self.owner_tank.rect.y
+                print('before removing from list')
+                del enemy_tanks_list[i]
+                del enemy_tank_bullets[i]
+                print('after removing from list')
+                break
 
         #update screen
         screen.blit(self.image, self.rect)
@@ -309,12 +371,6 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 bg_img = pygame.image.load('Background.png')
 bg_img = pygame.transform.scale(bg_img,(800,800))
 
-#create players tank
-player_one = Tank(385, 383, walls_list)
-
-#create player tank bullet
-player_one_bullet = Projectile(player_one, walls_list)
-
 #create enemy tank one
 enemy_tank_one = EnemyTank(470, 342, 620, 342)
 enemy_tank_two = EnemyTank(30, 30, 30, 230)
@@ -322,6 +378,20 @@ enemy_tank_three = EnemyTank(100, 365, 300, 365)
 enemy_tank_four = EnemyTank(50, 700, 250, 700)
 enemy_tank_five = EnemyTank(50, 500, 200, 500)
 enemy_tank_six = EnemyTank(500, 700, 700, 700)
+enemy_tanks_list = [enemy_tank_one, enemy_tank_two, enemy_tank_three, enemy_tank_four, enemy_tank_five, enemy_tank_six]
+
+#create players tank
+player_one = Tank(385, 383, walls_list)
+
+#create player tank bullet
+player_one_bullet = Projectile(player_one, walls_list)
+enemy_one_bullet = Projectile(enemy_tank_one, walls_list)
+enemy_two_bullet = Projectile(enemy_tank_two, walls_list)
+enemy_three_bullet = Projectile(enemy_tank_three, walls_list)
+enemy_four_bullet = Projectile(enemy_tank_four, walls_list)
+enemy_five_bullet = Projectile(enemy_tank_five, walls_list)
+enemy_six_bullet = Projectile(enemy_tank_six, walls_list)
+enemy_tank_bullets = [enemy_one_bullet, enemy_two_bullet, enemy_three_bullet, enemy_four_bullet, enemy_five_bullet, enemy_six_bullet]
 
 #add caption to the game window
 pygame.display.set_caption("Tank Game")
@@ -334,24 +404,20 @@ while run:
     #set background
     screen.blit(bg_img, (0,0))
 
-    #check for collisions
-    bullet_collision = pygame.Rect.colliderect(wall1.rect, player_one_bullet.rect)
-
     #update tank
     player_one.update_tank()
 
     #rotate tank
     player_one.rotate_tank()
 
-    #update player 1 bullet
+    #update all bullets
     player_one_bullet.update_bullet()
+    for bullet in enemy_tank_bullets:
+        bullet.update_bullet()
 
-    enemy_tank_one.update_tank()
-    enemy_tank_two.update_tank()
-    enemy_tank_three.update_tank()
-    enemy_tank_four.update_tank()
-    enemy_tank_five.update_tank()
-    enemy_tank_six.update_tank()
+    #update all enemy tanks
+    for tank in enemy_tanks_list:
+        tank.update_tank()
 
     #draw walls
     screen.blit(wall1.surface,(wall1.x_pos,wall1.y_pos))
@@ -371,6 +437,8 @@ while run:
     screen.blit(wall15.surface,(wall15.x_pos,wall15.y_pos))
 
     #quit condition
+    if len(enemy_tanks_list) == 0:
+        pass
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
