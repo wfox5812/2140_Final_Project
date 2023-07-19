@@ -124,19 +124,30 @@ class EnemyTank:
     This is a class representing the enemy tank
     '''
 
-    def __init__(self, start_x, start_y, end_x, end_y):
+    def __init__(self, start_x, start_y, end_x, end_y, direction = 270):
         img = pygame.image.load('enemy_tank.png')
         self.image = pygame.transform.scale(img, (30, 35))
         self.rect = self.image.get_rect()
         self.rect.x = start_x
         self.rect.y = start_y
-        self.direction = 270
         self.start_x = start_x
         self.start_y = start_y
         self.end_x = end_x
         self.end_y = end_y
         self.recent_limit_x = self.start_x
         self.recent_limit_y = self.start_y
+        if direction == 270:
+            self.direction = 270
+        elif direction == 180:
+            self.direction = 180
+            self.image = pygame.transform.rotate(self.image, -90)
+        elif direction == 90:
+            self.direction = 90
+            self.image = pygame.transform.rotate(self.image, 180)
+        elif direction == 0:
+            self.direction = 0
+            self.image = pygame.transform.rotate(self.image, 90)
+
 
     #def check_collision(self):
 
@@ -185,7 +196,6 @@ class Projectile:
     def __init__(self, owner_tank, walls_list):
         img = pygame.image.load('bullet.png')
         self.image = pygame.transform.scale(img, (5, 20))
-        self.state = 'ready'
         self.owner_tank = owner_tank
         self.rect = self.image.get_rect()
         self.rect.x = self.owner_tank.rect.centerx
@@ -193,6 +203,15 @@ class Projectile:
         self.direction = self.owner_tank.direction
         self.orientation = 90
         self.walls = walls_list
+        if self.owner_tank != player_one:
+            self.state = 'fired'
+            self.direction = self.owner_tank.direction
+            self.rect.x = self.owner_tank.rect.centerx
+            self.rect.y = self.owner_tank.rect.centery
+            self.constant_shoot = True
+        else:
+            self.state = 'ready'
+            self.constant_shoot = False
         #self.tanks = [tank for tank in self.tanks if not tank.remove_flag]
 
     def update_bullet(self):
@@ -290,32 +309,25 @@ class Projectile:
        
         #if bullet hits the edge of the screen
         if (self.rect.x < 0) or (self.rect.x > 800) or (self.rect.y < 0) or (self.rect.y > 800):
-            self.state = 'ready'
+            if self.constant_shoot == True:
+                self.state = 'fired'
+            elif self.constant_shoot == False:
+                self.state = 'ready'
             self.rect.x = self.owner_tank.rect.x
             self.rect.y = self.owner_tank.rect.y
 
         #if bullet hits a wall
         for i in range(len(self.walls)):
             if self.walls[i].rect.colliderect(self.rect):
-                self.state = 'ready'
+                if self.constant_shoot == True:
+                    self.state = 'fired'
+                elif self.constant_shoot == False:
+                    self.state = 'ready'
                 self.rect.x = self.owner_tank.rect.x
                 self.rect.y = self.owner_tank.rect.y
                 pass
         
         #if bullet hits an enemy tank
-        '''for i in range(len(enemy_tanks_list)):
-            if enemy_tanks_list[i].rect.colliderect(player_one_bullet.rect):
-                self.state = 'ready'
-                self.rect.x = self.owner_tank.rect.x
-                self.rect.y = self.owner_tank.rect.y
-                print('nefore removing from list')
-                enemy_tanks_list.remove(enemy_tanks_list[i])
-                enemy_tank_bullets.remove(enemy_tank_bullets[i])
-                print('before removing sprires')
-                del enemy_tanks_list[i]
-                del enemy_tank_bullets[i]
-                break'''
-        
         for i in range(len(enemy_tanks_list) - 1, -1, -1):
             if enemy_tanks_list[i].rect.colliderect(player_one_bullet.rect):
                 self.state = 'ready'
@@ -371,13 +383,19 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 bg_img = pygame.image.load('Background.png')
 bg_img = pygame.transform.scale(bg_img,(800,800))
 
-#create enemy tank one
-enemy_tank_one = EnemyTank(470, 342, 620, 342)
-enemy_tank_two = EnemyTank(30, 30, 30, 230)
-enemy_tank_three = EnemyTank(100, 365, 300, 365)
-enemy_tank_four = EnemyTank(50, 700, 250, 700)
-enemy_tank_five = EnemyTank(50, 500, 200, 500)
-enemy_tank_six = EnemyTank(500, 700, 700, 700)
+#create enemy tanks
+#middle right
+enemy_tank_one = EnemyTank(470, 342, 620, 342, 0)
+#top left
+enemy_tank_two = EnemyTank(30, 30, 30, 230, 0)
+#middle left
+enemy_tank_three = EnemyTank(100, 365, 300, 365, 180)
+#bottom left
+enemy_tank_four = EnemyTank(50, 700, 350, 700, 90)
+#2nd to bottom left
+enemy_tank_five = EnemyTank(50, 500, 200, 500, 0)
+#bottom right
+enemy_tank_six = EnemyTank(500, 700, 700, 700, 90)
 enemy_tanks_list = [enemy_tank_one, enemy_tank_two, enemy_tank_three, enemy_tank_four, enemy_tank_five, enemy_tank_six]
 
 #create players tank
@@ -446,11 +464,6 @@ while run:
     pygame.display.update()
     clock.tick(60)
 pygame.quit()
-
-
-
-
-
 
 
 
