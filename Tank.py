@@ -458,12 +458,6 @@ while not game_over:
     #set background
     screen.blit(bg_img, (0,0))
 
-    #update tank
-    player_one.update_tank()
-
-    #rotate tank
-    player_one.rotate_tank()
-
     #update all bullets
     player_one_bullet.update_bullet()
     for bullet in enemy_tank_bullets:
@@ -483,6 +477,13 @@ while not game_over:
             pygame.time.delay(5000)
             game_over = True
 
+
+    #update tank
+    player_one.update_tank()
+
+    #rotate tank
+    player_one.rotate_tank()
+    
     #update all enemy tanks
     for tank in enemy_tanks_list:
         tank.update_tank()
