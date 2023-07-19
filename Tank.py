@@ -193,9 +193,8 @@ class Projectile:
     '''
     pass
 
-    def __init__(self, owner_tank, walls_list, health = 3, game_over = False):
+    def __init__(self, owner_tank, walls_list, health = 3):
         self.health = health
-        self.hits = 0
         img = pygame.image.load('bullet.png')
         self.image = pygame.transform.scale(img, (5, 20))
         self.owner_tank = owner_tank
@@ -205,7 +204,6 @@ class Projectile:
         self.direction = self.owner_tank.direction
         self.orientation = 90
         self.walls = walls_list
-        self.game_over = game_over
         if self.owner_tank != player_one:
             self.state = 'fired'
             self.direction = self.owner_tank.direction
@@ -217,8 +215,6 @@ class Projectile:
             self.constant_shoot = False
         #self.tanks = [tank for tank in self.tanks if not tank.remove_flag]
 
-    def update_health(self):
-        self.health = self.health - 1
 
     def update_bullet(self):
         dy = 5
@@ -348,13 +344,8 @@ class Projectile:
         #if enemy bullet hits player tank
         for i in range(len(enemy_tank_bullets) - 1, -1, -1):
             if enemy_tank_bullets[i].rect.colliderect(player_one.rect):
-                Projectile.update_health(self)
-                self.hits += 1
-
-                if self.health == 0:
-                    self.game_over = True
-                print(self.health)
-                print('Hit')
+                self.health = self.health - 1
+                print('Health: ' + str(self.health))
                 if self.constant_shoot == True:
                     self.state = 'fired'
                 elif self.constant_shoot == False:
@@ -363,9 +354,9 @@ class Projectile:
                 self.rect.y = self.owner_tank.rect.y
                 break
 
-        screen.blit(self.image, self.rect)      
+        screen.blit(self.image, self.rect)
 
-    
+
 class Wall:
     '''
     This is a class representing a wall on the board
@@ -439,14 +430,31 @@ enemy_tank_bullets = [enemy_one_bullet, enemy_two_bullet, enemy_three_bullet, en
 h_img = pygame.image.load('pixel_heart.png')
 hp_img = pygame.transform.scale(h_img, (20, 20))
 
+
+def game_over_screen():
+    pygame.init()
+    pygame.display.set_caption("Game Over")
+    
+    screen.fill((0,0,0))
+    font = pygame.font.Font(None, 80)
+    text = font.render("Game Over", True, (255, 255, 255))
+    text_width, text_height = text.get_size()
+    center_x = (screen_width - text_width) // 2
+    center_y = (screen_height - text_height) // 2
+    screen.blit(text, (center_x, center_y))
+
+    pygame.display.update()
+
 #add caption to the game window
 pygame.display.set_caption("Tank Game")
 
 #run condition
-run = True
+game_over = False
+
+
 
 #GAME LOOP
-while run:
+while not game_over:
     #set background
     screen.blit(bg_img, (0,0))
 
@@ -460,23 +468,20 @@ while run:
     player_one_bullet.update_bullet()
     for bullet in enemy_tank_bullets:
         bullet.update_bullet()
-        for i in range(bullet.health):
-            if bullet.health == 3:
-                screen.blit(hp_img, (370, 360))
-                screen.blit(hp_img, (390, 360))
-                screen.blit(hp_img, (410, 360))
-            elif bullet.health == 2:
-                screen.blit(hp_img, (370, 360))
-                screen.blit(hp_img, (390, 360))
-            elif bullet.health == 1:
-                screen.blit(hp_img, (370, 360))
 
-        
-        if bullet.game_over == True:
-            font = pygame.font.Font(None, 50)
-            text_surface = font.render("Game Over", True, (0, 0, 0))
-            text_rect = text_surface.get_rect(center=(800 // 2, 800 // 2))
-            screen.blit(text_surface, text_rect)
+        if bullet.health == 3:
+            screen.blit(hp_img, (370, 360))
+            screen.blit(hp_img, (390, 360))
+            screen.blit(hp_img, (410, 360))
+        elif bullet.health == 2:
+            screen.blit(hp_img, (370, 360))
+            screen.blit(hp_img, (390, 360))
+        elif bullet.health == 1:
+            screen.blit(hp_img, (370, 360))
+        else:
+            game_over_screen()
+            pygame.time.delay(5000)
+            game_over = True
 
     #update all enemy tanks
     for tank in enemy_tanks_list:
@@ -499,17 +504,12 @@ while run:
     screen.blit(wall14.surface,(wall14.x_pos,wall14.y_pos))
     screen.blit(wall15.surface,(wall15.x_pos,wall15.y_pos))
 
-    # if Projectile.health == 0:
-    #     print('before removing from list')
-    #     del player_one
-    #     print('after removing from list')
-
     #quit condition
     if len(enemy_tanks_list) == 0:
         pass
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            game_over = True
     
     pygame.display.update()
     clock.tick(60)
