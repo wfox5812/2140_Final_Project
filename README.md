@@ -1,10 +1,10 @@
 # 2140_Final_Project
 1. Who is on your team? If you are working with a partner, how will the labor be divided? 
     William Fox and Charlie Amante are collaborating on this project. The labor will be as evenly divided as possible by assigning
-    different issues to each partner. For example, if three classes have to be defined as three different issues in the project,
-    and one class is slightly more complex than the other two, the two simpler classes will be assigned to one partner and the 
-    more complex class will be assigned to the other partner. Work will be divided in an attempt to have both partners work on
-    every main aspect of the game so that they both have a solid understanding of every aspect of the program.
+different issues to each partner. For example, if three classes have to be defined as three different issues in the project,
+and one class is slightly more complex than the other two, the two simpler classes will be assigned to one partner and the 
+more complex class will be assigned to the other partner. Work will be divided in an attempt to have both partners work on
+every main aspect of the game so that they both have a solid understanding of every aspect of the program.
 
 2. An overview of the project similar in scope and length to the example projects listed below.
 Tank game:
